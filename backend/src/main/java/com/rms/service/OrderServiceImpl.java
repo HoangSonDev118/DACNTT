@@ -1,0 +1,119 @@
+package com.rms.service;
+
+import com.rms.dto.request.OrderItemRequest;
+import com.rms.dto.request.OrderRequest;
+import com.rms.dto.response.OrderItemResponse;
+import com.rms.dto.response.OrderResponse;
+import com.rms.exception.BadRequestException;
+import com.rms.exception.ResourceNotFoundException;
+import com.rms.model.Dish;
+import com.rms.model.Order;
+import com.rms.model.OrderItem;
+import com.rms.repository.DishRepository;
+import com.rms.repository.OrderRepository;
+import com.rms.repository.TableRepository;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+
+import java.time.LocalDateTime;
+import java.util.List;
+
+@Service
+@RequiredArgsConstructor
+public class OrderServiceImpl implements OrderService {
+
+    private final OrderRepository orderRepository;
+    private final DishRepository dishRepository;
+    private final TableRepository tableRepository;
+
+    @Override
+    public OrderResponse create(OrderRequest request) {
+        // validate table exists
+        if (!tableRepository.existsById(request.getTableId())) {
+            throw new BadRequestException("Table not found");
+        }
+
+        if (request.getItems() == null || request.getItems().isEmpty()) {
+            throw new BadRequestException("Order must contain at least one item");
+        }
+
+        // build items, calculate totals
+        double total = 0.0;
+        List<OrderItem> items = request.getItems().stream().map(this::toOrderItem).toList();
+        for (OrderItem it : items) {
+            if (it.getPricePerUnit() == null) throw new BadRequestException("Dish price missing");
+            total += it.getPricePerUnit() * it.getQuantity();
+        }
+
+        Order order = Order.builder()
+                .tableId(request.getTableId())
+                .items(items)
+                .totalPrice(total)
+                .createdAt(LocalDateTime.now())
+                .status("NEW")
+                .build();
+
+        orderRepository.save(order);
+        return toResponse(order);
+    }
+
+    private OrderItem toOrderItem(OrderItemRequest r) {
+        Dish d = dishRepository.findById(r.getDishId())
+                .orElseThrow(() -> new BadRequestException("Dish not found: " + r.getDishId()));
+        if (!d.isAvailable()) throw new BadRequestException("Dish not available: " + d.getName());
+        return OrderItem.builder()
+                .dishId(d.getId())
+                .quantity(r.getQuantity())
+                .pricePerUnit(d.getPrice())
+                .build();
+    }
+
+    @Override
+    public OrderResponse updateStatus(String id, String status) {
+        Order order = orderRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Order not found"));
+        order.setStatus(status);
+        orderRepository.save(order);
+        return toResponse(order);
+    }
+
+    @Override
+    public OrderResponse getById(String id) {
+        return orderRepository.findById(id).map(this::toResponse)
+                .orElseThrow(() -> new ResourceNotFoundException("Order not found"));
+    }
+
+    @Override
+    public List<OrderResponse> getAll() {
+        return orderRepository.findAll().stream().map(this::toResponse).toList();
+    }
+
+    @Override
+    public List<OrderResponse> getByTableId(String tableId) {
+        return orderRepository.findByTableId(tableId).stream().map(this::toResponse).toList();
+    }
+
+    @Override
+    public void delete(String id) {
+        if (!orderRepository.existsById(id)) throw new ResourceNotFoundException("Order not found");
+        orderRepository.deleteById(id);
+    }
+
+    private OrderResponse toResponse(Order o) {
+        OrderResponse r = new OrderResponse();
+        r.setId(o.getId());
+        r.setTableId(o.getTableId());
+        r.setTotalPrice(o.getTotalPrice());
+        r.setCreatedAt(o.getCreatedAt());
+        r.setStatus(o.getStatus());
+        List<OrderItemResponse> items = o.getItems().stream().map(it -> {
+            OrderItemResponse ir = new OrderItemResponse();
+            ir.setDishId(it.getDishId());
+            ir.setQuantity(it.getQuantity());
+            ir.setPricePerUnit(it.getPricePerUnit());
+            return ir;
+        }).toList();
+        r.setItems(items);
+        return r;
+    }
+}

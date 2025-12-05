@@ -1,0 +1,15 @@
+package com.rms.service;
+
+import com.rms.dto.request.OrderRequest;
+import com.rms.dto.response.OrderResponse;
+
+import java.util.List;
+
+public interface OrderService {
+    OrderResponse create(OrderRequest request);
+    OrderResponse updateStatus(String id, String status);
+    OrderResponse getById(String id);
+    List<OrderResponse> getAll();
+    List<OrderResponse> getByTableId(String tableId);
+    void delete(String id);
+}
