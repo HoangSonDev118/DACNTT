@@ -36,11 +36,19 @@ public class SecurityConfig {
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/auth/**").permitAll()
+                        // Public endpoints - không cần authentication
+                        .requestMatchers("/api/auth/login").permitAll()
+                        .requestMatchers("/api/auth/refresh").permitAll()
+                        .requestMatchers("/api/orders/public").permitAll()
+                        .requestMatchers("/api/orders/public/**").permitAll()
                         .requestMatchers("/api/public/**").permitAll()
-
-                        .requestMatchers("/api/orders/public").permitAll()     // CHO PHÉP PUBLIC
-                        .requestMatchers("/api/orders/public/**").permitAll()  // Phòng trường hợp có thêm endpoint
+                        
+                        // Chỉ ADMIN mới có thể tạo tài khoản mới
+                        .requestMatchers("/api/auth/register").hasAuthority("ADMIN")
+                        
+                        // ADMIN có quyền truy cập tất cả
+                        .requestMatchers("/api/**").hasAnyAuthority("ADMIN", "STAFF")
+                        
                         .anyRequest().authenticated())
 
                 .authenticationProvider(authenticationProvider())

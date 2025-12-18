@@ -1,8 +1,10 @@
 package com.rms.service;
 
 import com.rms.dto.request.OrderRequest;
+import com.rms.dto.response.DailySummaryResponse;
 import com.rms.dto.response.OrderResponse;
 
+import java.time.LocalDate;
 import java.util.List;
 
 public interface OrderService {
@@ -12,4 +14,5 @@ public interface OrderService {
     List<OrderResponse> getAll();
     List<OrderResponse> getByTableId(String tableId);
     void delete(String id);
+    DailySummaryResponse getDailySummary(LocalDate date);
 }

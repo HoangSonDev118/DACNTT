@@ -107,6 +107,55 @@ mvn clean install -DskipTests
 
 ---
 
+## Tạo Tài Khoản ADMIN Đầu Tiên
+
+**⚠️ QUAN TRỌNG:** Trước khi sử dụng hệ thống, bạn cần tạo tài khoản ADMIN đầu tiên trực tiếp trong MongoDB.
+
+### Cách 1: Sử dụng MongoDB Compass hoặc Atlas
+
+1. Mở MongoDB Compass hoặc truy cập MongoDB Atlas
+2. Kết nối đến database `rms`
+3. Tạo collection `users` (nếu chưa có)
+4. Insert document mới:
+
+```json
+{
+  "email": "admin@rms.com",
+  "password": "$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy",
+  "displayName": "Admin",
+  "role": "ADMIN",
+  "isActive": true,
+  "createdAt": {"$date": "2025-12-18T00:00:00.000Z"}
+}
+```
+
+**Password mặc định:** `admin123` (đã được mã hóa BCrypt)
+
+### Cách 2: Sử dụng MongoDB Shell
+
+```bash
+mongosh "mongodb+srv://<username>:<password>@<cluster>.mongodb.net/rms"
+
+db.users.insertOne({
+  email: "admin@rms.com",
+  password: "$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy",
+  displayName: "Admin",
+  role: "ADMIN",
+  isActive: true,
+  createdAt: new Date()
+})
+```
+
+### Đăng Nhập Với Tài Khoản ADMIN
+
+Sau khi tạo tài khoản ADMIN, đăng nhập với:
+- **Email:** `admin@rms.com`
+- **Password:** `admin123`
+
+**🔒 Khuyến nghị:** Đổi mật khẩu ngay sau lần đăng nhập đầu tiên!
+
+---
+
 ## Chạy Dự Án
 
 #### Terminal - Backend:
@@ -122,67 +171,128 @@ Backend sẽ chạy tại: `http://localhost:8017`
 
 ### Authentication
 
-*LƯU Ý: những API cần token cần cấp token ở Authorization là Bearer Token `accessToken`
+**LƯU Ý QUAN TRỌNG VỀ PHÂN QUYỀN:**
+- **Chỉ có 2 role:** `ADMIN` và `STAFF`
+- **ADMIN**: Có quyền cao nhất, quản lý toàn bộ hệ thống
+- **STAFF**: Nhân viên, có quyền quản lý đơn hàng, món ăn, bàn, thanh toán
+- **Tạo tài khoản**: Chỉ ADMIN mới được tạo tài khoản mới (để tạo tài khoản STAFF)
+- **Đặt order**: Ai cũng có thể đặt order qua endpoint public
+
+*Những API cần token phải có Bearer Token `accessToken` trong header Authorization*
+
+---
 
 =====
-USER
+AUTHENTICATION
 =====
-| POST | `/api/auth/register` | Đăng ký |
+
+### 1. Đăng ký tài khoản mới (CHỈ ADMIN)
+
+| POST | `/api/auth/register` | Tạo tài khoản mới cho STAFF (CHỈ ADMIN) |
+
+**⚠️ LƯU Ý:** Endpoint này yêu cầu token của ADMIN. Chỉ ADMIN mới có thể tạo tài khoản mới.
+
 ví dụ payload 
+```json
 {
     "displayName": "Nguyen Van B",
-    "email": "nguyenvand@gmail.com",
-    "password": "Son1182004"
+    "email": "nguyenvanb@gmail.com",
+    "password": "Son1182004",
+    "role": "STAFF"
 }
+```
+
+**Role có thể sử dụng:**
+- `STAFF` - Nhân viên (được phép tạo)
+- `ADMIN` - Quản trị viên (KHÔNG được phép tạo qua API này)
 
 response
+```json
 {
     "success": true,
     "message": "Registration successful",
     "data": {
-        "accessToken": "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiI2OTMzMDIwZTE0MTVhYTZkZTlhNzhiNzAiLCJpYXQiOjE3NjQ5NTA1NDIsImV4cCI6MTc2NTAzNjk0Mn0.7mDy4Qw142yHN8ADBHzDMSxyvHGBgB7vrFjQpV5YZmNTcBtKNAbXXRNgGSkUuJ2wD3acom5_M3DdRigJlvsdnA",
-        "refreshToken": "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiI2OTMzMDIwZTE0MTVhYTZkZTlhNzhiNzAiLCJpYXQiOjE3NjQ5NTA1NDIsImV4cCI6MTc2NTU1NTM0Mn0.5_qUsmvjdfbL_diZ2jc5BMVoRwbZCe8PfJmXT16Jr-vaB4eEvbBZNDkhGxsLDa-Dj-pDU1H5a890CEcz5rrnpQ",
+        "accessToken": "eyJhbGciOiJIUzUxMiJ9...",
+        "refreshToken": "eyJhbGciOiJIUzUxMiJ9...",
         "tokenType": "Bearer",
         "user": {
             "id": "6933020e1415aa6de9a78b70",
-            "email": "nguyenvand@gmail.com",
+            "email": "nguyenvanb@gmail.com",
             "displayName": "Nguyen Van B",
+            "role": "STAFF",
             "avatar": null,
-            "createdAt": "2025-12-05T23:02:22.80384"
+            "createdAt": "2025-12-18T10:02:22.803"
         }
     }
 }
+```
 
+### 2. Đăng nhập
 
-| POST | `/api/auth/login` | Đăng nhập |
+| POST | `/api/auth/login` | Đăng nhập (PUBLIC) |
+
+**⚠️ LƯU Ý:** Endpoint này là public, không cần token.
+
 ví dụ payload
+```json
 {
     "email": "nguyenvanb@gmail.com",
     "password": "Son1182004"
-
 }
+```
 
 response
+```json
 {
     "success": true,
     "message": "Login successful",
     "data": {
-        "accessToken": "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiI2OTMzMDIwZTE0MTVhYTZkZTlhNzhiNzAiLCJpYXQiOjE3NjQ5NTI2MTMsImV4cCI6MTc2NTAzOTAxM30.zE_ShKLSU6JtNTCyG-Ku5siavVeXEZlGNJO9EyB8UczH4rba-66nUTm4iIS7b3jrJj9Q-rKKhJJd3fdMY7j0YQ",
-        "refreshToken": "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiI2OTMzMDIwZTE0MTVhYTZkZTlhNzhiNzAiLCJpYXQiOjE3NjQ5NTI2MTMsImV4cCI6MTc2NTU1NzQxM30.fQqDZW_99-84tdqdruhuYLQN31ZIly5nU4NH5CNt5fDpHea8Q-qmT_cyZ2tzKwoQSf7VhLEMw1P0it5KxeE6PA",
+        "accessToken": "eyJhbGciOiJIUzUxMiJ9...",
+        "refreshToken": "eyJhbGciOiJIUzUxMiJ9...",
         "tokenType": "Bearer",
         "user": {
             "id": "6933020e1415aa6de9a78b70",
-            "email": "nguyenvand@gmail.com",
+            "email": "nguyenvanb@gmail.com",
             "displayName": "Nguyen Van B",
+            "role": "STAFF",
             "avatar": null,
             "createdAt": "2025-12-05T23:02:22.803"
         }
     }
 }
+```
 
+### 3. Refresh Token
 
+| POST | `/api/auth/refresh` | Refresh token (PUBLIC) |
 
-| POST | `/api/auth/refresh` | Refresh token |
+ví dụ payload
+```json
+{
+    "refreshToken": "eyJhbGciOiJIUzUxMiJ9..."
+}
+```
+
+response
+```json
+{
+    "success": true,
+    "message": "Token refreshed",
+    "data": {
+        "accessToken": "eyJhbGciOiJIUzUxMiJ9...",
+        "refreshToken": "eyJhbGciOiJIUzUxMiJ9...",
+        "tokenType": "Bearer",
+        "user": {
+            "id": "6933020e1415aa6de9a78b70",
+            "email": "nguyenvanb@gmail.com",
+            "displayName": "Nguyen Van B",
+            "role": "STAFF",
+            "avatar": null,
+            "createdAt": "2025-12-05T23:02:22.803"
+        }
+    }
+}
+```
 
 
 ------------------------------------------------------------------------------------------------------
@@ -416,8 +526,519 @@ response
 }
 | DELETE | `/api/orders/69330f8f17364e06252ede3a` | Xóa order (Chỉ ADMIN OR STAFF) |
 
+| GET | `/api/orders/summary/daily` | Tổng hợp đơn hàng theo ngày (Chỉ ADMIN OR STAFF) |
+
+**Lấy tổng hợp đơn hàng của ngày hôm nay:**
+```
+GET /api/orders/summary/daily
+```
+
+**Lấy tổng hợp đơn hàng của ngày cụ thể:**
+```
+GET /api/orders/summary/daily?date=2025-12-18
+```
+
+response
+```json
+{
+    "date": "2025-12-18",
+    "totalOrders": 25,
+    "completedOrders": 20,
+    "cancelledOrders": 2,
+    "pendingOrders": 3,
+    "totalRevenue": 2500000.0,
+    "averageOrderValue": 125000.0
+}
+```
+
+**Giải thích các trường:**
+- `date`: Ngày được tổng hợp (format: YYYY-MM-DD)
+- `totalOrders`: Tổng số đơn hàng trong ngày
+- `completedOrders`: Số đơn hàng đã hoàn thành
+- `cancelledOrders`: Số đơn hàng đã hủy
+- `pendingOrders`: Số đơn hàng đang xử lý (NEW, PREPARING, READY, SERVED)
+- `totalRevenue`: Tổng doanh thu từ các đơn đã hoàn thành (VNĐ)
+- `averageOrderValue`: Giá trị trung bình mỗi đơn hàng đã hoàn thành (VNĐ)
+
+------------------------------------------------------------------------------------------------------
 
 
+
+=====
+DISCOUNT
+=====
+| POST | `/api/discounts` | Tạo mã giảm giá (Chỉ ADMIN OR STAFF) |
+ví dụ payload
+```json
+{
+  "code": "SUMMER2025",
+  "description": "Giảm giá mùa hè 2025",
+  "discountPercent": 20,
+  "minOrderAmount": 100000,
+  "maxDiscountAmount": 50000,
+  "startDate": "2025-06-01T00:00:00",
+  "endDate": "2025-08-31T23:59:59",
+  "usageLimit": 100
+}
+```
+
+response
+```json
+{
+    "id": "693313a4b8e7f12a3b4c5d6e",
+    "code": "SUMMER2025",
+    "description": "Giảm giá mùa hè 2025",
+    "discountPercent": 20.0,
+    "minOrderAmount": 100000.0,
+    "maxDiscountAmount": 50000.0,
+    "startDate": "2025-06-01T00:00:00",
+    "endDate": "2025-08-31T23:59:59",
+    "usageLimit": 100,
+    "usageCount": 0,
+    "active": true
+}
+```
+
+| GET | `/api/discounts/693313a4b8e7f12a3b4c5d6e` | Lấy thông tin mã giảm giá theo ID (Chỉ ADMIN OR STAFF) |
+response
+```json
+{
+    "id": "693313a4b8e7f12a3b4c5d6e",
+    "code": "SUMMER2025",
+    "description": "Giảm giá mùa hè 2025",
+    "discountPercent": 20.0,
+    "minOrderAmount": 100000.0,
+    "maxDiscountAmount": 50000.0,
+    "startDate": "2025-06-01T00:00:00",
+    "endDate": "2025-08-31T23:59:59",
+    "usageLimit": 100,
+    "usageCount": 0,
+    "active": true
+}
+```
+
+| GET | `/api/discounts/code/SUMMER2025` | Lấy thông tin mã giảm giá theo code (Chỉ ADMIN OR STAFF) |
+response
+```json
+{
+    "id": "693313a4b8e7f12a3b4c5d6e",
+    "code": "SUMMER2025",
+    "description": "Giảm giá mùa hè 2025",
+    "discountPercent": 20.0,
+    "minOrderAmount": 100000.0,
+    "maxDiscountAmount": 50000.0,
+    "startDate": "2025-06-01T00:00:00",
+    "endDate": "2025-08-31T23:59:59",
+    "usageLimit": 100,
+    "usageCount": 5,
+    "active": true
+}
+```
+
+| GET | `/api/discounts` | Lấy tất cả mã giảm giá (Chỉ ADMIN OR STAFF) |
+response
+```json
+[
+    {
+        "id": "693313a4b8e7f12a3b4c5d6e",
+        "code": "SUMMER2025",
+        "description": "Giảm giá mùa hè 2025",
+        "discountPercent": 20.0,
+        "minOrderAmount": 100000.0,
+        "maxDiscountAmount": 50000.0,
+        "startDate": "2025-06-01T00:00:00",
+        "endDate": "2025-08-31T23:59:59",
+        "usageLimit": 100,
+        "usageCount": 5,
+        "active": true
+    },
+    {
+        "id": "693313b5c9f8g23b4c5d6e7f",
+        "code": "NEWYEAR",
+        "description": "Giảm giá năm mới",
+        "discountPercent": 15.0,
+        "minOrderAmount": 50000.0,
+        "maxDiscountAmount": 30000.0,
+        "startDate": "2025-01-01T00:00:00",
+        "endDate": "2025-01-31T23:59:59",
+        "usageLimit": 200,
+        "usageCount": 50,
+        "active": true
+    }
+]
+```
+
+| PUT | `/api/discounts/693313a4b8e7f12a3b4c5d6e` | Cập nhật mã giảm giá (Chỉ ADMIN OR STAFF) |
+ví dụ payload
+```json
+{
+  "code": "SUMMER2025",
+  "description": "Giảm giá mùa hè 2025 - Cập nhật",
+  "discountPercent": 25,
+  "minOrderAmount": 100000,
+  "maxDiscountAmount": 60000,
+  "active": true
+}
+```
+
+response
+```json
+{
+    "id": "693313a4b8e7f12a3b4c5d6e",
+    "code": "SUMMER2025",
+    "description": "Giảm giá mùa hè 2025 - Cập nhật",
+    "discountPercent": 25.0,
+    "minOrderAmount": 100000.0,
+    "maxDiscountAmount": 60000.0,
+    "startDate": "2025-06-01T00:00:00",
+    "endDate": "2025-08-31T23:59:59",
+    "usageLimit": 100,
+    "usageCount": 5,
+    "active": true
+}
+```
+
+| DELETE | `/api/discounts/693313a4b8e7f12a3b4c5d6e` | Xóa mã giảm giá (Chỉ ADMIN OR STAFF) |
+
+------------------------------------------------------------------------------------------------------
+
+
+
+=====
+DISH ITEMS (Món trong combo)
+=====
+| POST | `/api/dish-items` | Tạo món trong combo (Chỉ ADMIN OR STAFF) |
+ví dụ payload
+```json
+{
+  "comboId": "6932fb811024662f11ad577b",
+  "productId": "6932fb4e1024662f11ad577a",
+  "quantity": 2
+}
+```
+
+response
+```json
+{
+    "id": "693314c5d0a9h34c5d6e8g9h",
+    "comboId": "6932fb811024662f11ad577b",
+    "productId": "6932fb4e1024662f11ad577a",
+    "quantity": 2
+}
+```
+
+| GET | `/api/dish-items/693314c5d0a9h34c5d6e8g9h` | Lấy thông tin món trong combo theo ID (Chỉ ADMIN OR STAFF) |
+response
+```json
+{
+    "id": "693314c5d0a9h34c5d6e8g9h",
+    "comboId": "6932fb811024662f11ad577b",
+    "productId": "6932fb4e1024662f11ad577a",
+    "quantity": 2
+}
+```
+
+| GET | `/api/dish-items/combo/6932fb811024662f11ad577b` | Lấy tất cả món theo combo ID (Chỉ ADMIN OR STAFF) |
+response
+```json
+[
+    {
+        "id": "693314c5d0a9h34c5d6e8g9h",
+        "comboId": "6932fb811024662f11ad577b",
+        "productId": "6932fb4e1024662f11ad577a",
+        "quantity": 2
+    },
+    {
+        "id": "693314d6e1b0i45d6e9h0i1j",
+        "comboId": "6932fb811024662f11ad577b",
+        "productId": "6932fd61647cbf1cf45c37d9",
+        "quantity": 1
+    }
+]
+```
+
+| GET | `/api/dish-items/product/6932fb4e1024662f11ad577a` | Lấy tất cả combo chứa món theo product ID (Chỉ ADMIN OR STAFF) |
+response
+```json
+[
+    {
+        "id": "693314c5d0a9h34c5d6e8g9h",
+        "comboId": "6932fb811024662f11ad577b",
+        "productId": "6932fb4e1024662f11ad577a",
+        "quantity": 2
+    },
+    {
+        "id": "693314e7f2c1j56e7f0i2k3l",
+        "comboId": "6932fc921024662f11ad577c",
+        "productId": "6932fb4e1024662f11ad577a",
+        "quantity": 3
+    }
+]
+```
+
+| GET | `/api/dish-items` | Lấy tất cả các món trong combo (Chỉ ADMIN OR STAFF) |
+response
+```json
+[
+    {
+        "id": "693314c5d0a9h34c5d6e8g9h",
+        "comboId": "6932fb811024662f11ad577b",
+        "productId": "6932fb4e1024662f11ad577a",
+        "quantity": 2
+    },
+    {
+        "id": "693314d6e1b0i45d6e9h0i1j",
+        "comboId": "6932fb811024662f11ad577b",
+        "productId": "6932fd61647cbf1cf45c37d9",
+        "quantity": 1
+    },
+    {
+        "id": "693314e7f2c1j56e7f0i2k3l",
+        "comboId": "6932fc921024662f11ad577c",
+        "productId": "6932fb4e1024662f11ad577a",
+        "quantity": 3
+    }
+]
+```
+
+| PUT | `/api/dish-items/693314c5d0a9h34c5d6e8g9h` | Cập nhật món trong combo (Chỉ ADMIN OR STAFF) |
+ví dụ payload
+```json
+{
+  "comboId": "6932fb811024662f11ad577b",
+  "productId": "6932fb4e1024662f11ad577a",
+  "quantity": 3
+}
+```
+
+response
+```json
+{
+    "id": "693314c5d0a9h34c5d6e8g9h",
+    "comboId": "6932fb811024662f11ad577b",
+    "productId": "6932fb4e1024662f11ad577a",
+    "quantity": 3
+}
+```
+
+| DELETE | `/api/dish-items/693314c5d0a9h34c5d6e8g9h` | Xóa món trong combo (Chỉ ADMIN OR STAFF) |
+
+------------------------------------------------------------------------------------------------------
+
+
+
+=====
+PAYMENT
+=====
+| POST | `/api/payments` | Tạo thanh toán (Chỉ ADMIN OR STAFF) |
+ví dụ payload
+```json
+{
+  "orderId": "69330f8f17364e06252ede3a",
+  "method": "CASH",
+  "amount": 125000
+}
+```
+
+response
+```json
+{
+    "id": "693315f8g3d2k67f8g1j3k4m",
+    "orderId": "69330f8f17364e06252ede3a",
+    "method": "CASH",
+    "amount": 125000.0,
+    "status": "COMPLETED",
+    "paidAt": "2025-12-18T10:30:45.123"
+}
+```
+
+Các method thanh toán có thể sử dụng:
+- `CASH` - Tiền mặt
+- `CARD` - Thẻ
+- `MOMO` - Ví MoMo
+- `BANK_TRANSFER` - Chuyển khoản
+
+| GET | `/api/payments/693315f8g3d2k67f8g1j3k4m` | Lấy thông tin thanh toán theo ID (Chỉ ADMIN OR STAFF) |
+response
+```json
+{
+    "id": "693315f8g3d2k67f8g1j3k4m",
+    "orderId": "69330f8f17364e06252ede3a",
+    "method": "CASH",
+    "amount": 125000.0,
+    "status": "COMPLETED",
+    "paidAt": "2025-12-18T10:30:45.123"
+}
+```
+
+| GET | `/api/payments/order/69330f8f17364e06252ede3a` | Lấy tất cả thanh toán theo order ID (Chỉ ADMIN OR STAFF) |
+response
+```json
+[
+    {
+        "id": "693315f8g3d2k67f8g1j3k4m",
+        "orderId": "69330f8f17364e06252ede3a",
+        "method": "CASH",
+        "amount": 100000.0,
+        "status": "COMPLETED",
+        "paidAt": "2025-12-18T10:30:45.123"
+    },
+    {
+        "id": "693316h9i4e3l78g9h2k4l5n",
+        "orderId": "69330f8f17364e06252ede3a",
+        "method": "CARD",
+        "amount": 25000.0,
+        "status": "COMPLETED",
+        "paidAt": "2025-12-18T10:31:15.456"
+    }
+]
+```
+
+| GET | `/api/payments` | Lấy tất cả thanh toán (Chỉ ADMIN OR STAFF) |
+response
+```json
+[
+    {
+        "id": "693315f8g3d2k67f8g1j3k4m",
+        "orderId": "69330f8f17364e06252ede3a",
+        "method": "CASH",
+        "amount": 125000.0,
+        "status": "COMPLETED",
+        "paidAt": "2025-12-18T10:30:45.123"
+    },
+    {
+        "id": "693316h9i4e3l78g9h2k4l5n",
+        "orderId": "69330fa017364e06252ede3b",
+        "method": "MOMO",
+        "amount": 200000.0,
+        "status": "COMPLETED",
+        "paidAt": "2025-12-18T11:15:30.789"
+    }
+]
+```
+
+| DELETE | `/api/payments/693315f8g3d2k67f8g1j3k4m` | Xóa thanh toán (Chỉ ADMIN OR STAFF) |
+
+------------------------------------------------------------------------------------------------------
+
+
+
+## Các Query Parameters Hữu Ích
+
+### Lấy món ăn theo danh mục
+```
+GET /api/dishes?categoryId=6932f6c8aa07ce07d7f5edfa
+```
+
+### Lấy món ăn còn hàng
+```
+GET /api/dishes?available=true
+```
+
+### Lấy order theo bàn
+```
+GET /api/orders?tableId=6932f42aaa07ce07d7f5edf6
+```
+
+### Lấy tổng hợp đơn hàng trong ngày
+```
+GET /api/orders/summary/daily
+```
+
+### Lấy tổng hợp đơn hàng theo ngày cụ thể
+```
+GET /api/orders/summary/daily?date=2025-12-18
+```
+
+### Lấy tất cả bàn
+```
+GET /api/tables
+```
+
+### Lấy tất cả danh mục
+```
+GET /api/categories
+```
+
+### Lấy tất cả món ăn
+```
+GET /api/dishes
+```
+
+------------------------------------------------------------------------------------------------------
+
+
+
+## Trạng thái Order (Status)
+
+Các trạng thái order có thể sử dụng khi cập nhật:
+- `NEW` - Đơn hàng mới
+- `PREPARING` - Đang chuẩn bị
+- `READY` - Sẵn sàng phục vụ
+- `SERVED` - Đã phục vụ
+- `COMPLETED` - Hoàn thành
+- `CANCELLED` - Đã hủy
+
+------------------------------------------------------------------------------------------------------
+
+
+
+## Lưu Ý Quan Trọng
+
+### Hệ Thống Phân Quyền
+**Roles trong hệ thống:**
+- **ADMIN**: Quản trị viên cao nhất
+  - Có quyền truy cập tất cả endpoints
+  - Là người duy nhất có thể tạo tài khoản mới (tạo tài khoản STAFF)
+  - Quản lý toàn bộ hệ thống
+  
+- **STAFF**: Nhân viên
+  - Có quyền quản lý đơn hàng, món ăn, bàn, danh mục, thanh toán, giảm giá
+  - Không thể tạo tài khoản mới
+  - Truy cập hầu hết các endpoints quản lý
+
+**⚠️ LƯU Ý:** Hệ thống không còn role MEMBER. Chỉ có ADMIN và STAFF.
+
+### Authentication
+- Hầu hết các API đều yêu cầu JWT token trong header: `Authorization: Bearer {accessToken}`
+- Token có thời hạn 24 giờ (accessToken) và 7 ngày (refreshToken)
+- Khi accessToken hết hạn, sử dụng endpoint `/api/auth/refresh` để lấy token mới
+
+### Public Endpoints (Không cần token)
+- `POST /api/auth/login` - Đăng nhập
+- `POST /api/auth/refresh` - Refresh token
+- `POST /api/orders/public` - Tạo order công khai (ai cũng có thể đặt order)
+
+### Protected Endpoints (Cần token và role)
+- **Chỉ ADMIN:**
+  - `POST /api/auth/register` - Tạo tài khoản mới cho STAFF
+
+- **ADMIN & STAFF:**
+  - Tất cả các endpoints quản lý: orders, dishes, tables, categories, payments, discounts, dish-items
+
+### Quy Trình Tạo Tài Khoản
+1. Tài khoản ADMIN đầu tiên phải được tạo trực tiếp trong database
+2. ADMIN đăng nhập vào hệ thống
+3. ADMIN sử dụng endpoint `/api/auth/register` để tạo tài khoản STAFF
+4. STAFF đăng nhập và làm việc với quyền hạn được phép
+
+### Error Response Format
+```json
+{
+    "success": false,
+    "message": "Error message here",
+    "data": null
+}
+```
+
+### Success Response Format
+```json
+{
+    "success": true,
+    "message": "Success message here",
+    "data": { /* response data */ }
+}
+```
 
 ---
 

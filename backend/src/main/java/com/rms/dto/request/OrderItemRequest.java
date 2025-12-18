@@ -6,4 +6,5 @@ import lombok.Data;
 public class OrderItemRequest {
     private String dishId;
     private int quantity;
+    private String note;
 }

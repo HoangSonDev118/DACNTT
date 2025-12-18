@@ -1,8 +1,11 @@
 package com.rms.controller;
 
 import com.rms.dto.request.OrderRequest;
+import com.rms.dto.response.DailySummaryResponse;
 import com.rms.dto.response.OrderResponse;
 import com.rms.service.OrderService;
+
+import java.time.LocalDate;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
@@ -47,5 +50,12 @@ public class OrderController {
     @DeleteMapping("/{id}")
     public void delete(@PathVariable String id) {
         orderService.delete(id);
+    }
+
+    @GetMapping("/summary/daily")
+    public DailySummaryResponse getDailySummary(
+            @RequestParam(required = false) String date) {
+        LocalDate targetDate = date != null ? LocalDate.parse(date) : LocalDate.now();
+        return orderService.getDailySummary(targetDate);
     }
 }

@@ -33,11 +33,16 @@ public class AuthService {
             throw new BadRequestException("Email already exists");
         }
         
+        // Chỉ cho phép tạo tài khoản STAFF, không thể tự tạo ADMIN
+        if (request.getRole() == Role.ADMIN) {
+            throw new BadRequestException("Cannot create ADMIN account via registration");
+        }
+        
         User user = User.builder()
                 .email(request.getEmail())
                 .password(passwordEncoder.encode(request.getPassword()))
                 .displayName(request.getDisplayName())
-                .role(Role.MEMBER)
+                .role(request.getRole())
                 .isActive(true)
                 .build();
         

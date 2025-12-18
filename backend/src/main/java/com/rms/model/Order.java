@@ -20,6 +20,8 @@ public class Order {
     private List<OrderItem> items;
 
     private Double totalPrice;
+    private Double finalPrice;
+    private String note;
     private LocalDateTime createdAt;
     private String status; // NEW, PREPARING, SERVED, PAID, CANCELLED
 }

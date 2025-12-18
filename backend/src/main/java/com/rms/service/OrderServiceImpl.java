@@ -2,6 +2,7 @@ package com.rms.service;
 
 import com.rms.dto.request.OrderItemRequest;
 import com.rms.dto.request.OrderRequest;
+import com.rms.dto.response.DailySummaryResponse;
 import com.rms.dto.response.OrderItemResponse;
 import com.rms.dto.response.OrderResponse;
 import com.rms.exception.BadRequestException;
@@ -15,6 +16,7 @@ import com.rms.repository.TableRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -49,6 +51,8 @@ public class OrderServiceImpl implements OrderService {
                 .tableId(request.getTableId())
                 .items(items)
                 .totalPrice(total)
+                .finalPrice(total)
+                .note(request.getNote())
                 .createdAt(LocalDateTime.now())
                 .status("NEW")
                 .build();
@@ -65,6 +69,7 @@ public class OrderServiceImpl implements OrderService {
                 .dishId(d.getId())
                 .quantity(r.getQuantity())
                 .pricePerUnit(d.getPrice())
+                .note(r.getNote())
                 .build();
     }
 
@@ -99,18 +104,59 @@ public class OrderServiceImpl implements OrderService {
         orderRepository.deleteById(id);
     }
 
+    @Override
+    public DailySummaryResponse getDailySummary(LocalDate date) {
+        LocalDateTime startOfDay = date.atStartOfDay();
+        LocalDateTime endOfDay = date.plusDays(1).atStartOfDay();
+        
+        List<Order> orders = orderRepository.findByCreatedAtBetween(startOfDay, endOfDay);
+        
+        long totalOrders = orders.size();
+        long completedOrders = orders.stream()
+                .filter(o -> "COMPLETED".equalsIgnoreCase(o.getStatus()))
+                .count();
+        long cancelledOrders = orders.stream()
+                .filter(o -> "CANCELLED".equalsIgnoreCase(o.getStatus()))
+                .count();
+        long pendingOrders = orders.stream()
+                .filter(o -> !"COMPLETED".equalsIgnoreCase(o.getStatus()) 
+                        && !"CANCELLED".equalsIgnoreCase(o.getStatus()))
+                .count();
+        
+        double totalRevenue = orders.stream()
+                .filter(o -> "COMPLETED".equalsIgnoreCase(o.getStatus()))
+                .mapToDouble(o -> o.getFinalPrice() != null ? o.getFinalPrice() : 0.0)
+                .sum();
+        
+        double averageOrderValue = completedOrders > 0 ? totalRevenue / completedOrders : 0.0;
+        
+        return DailySummaryResponse.builder()
+                .date(date)
+                .totalOrders(totalOrders)
+                .completedOrders(completedOrders)
+                .cancelledOrders(cancelledOrders)
+                .pendingOrders(pendingOrders)
+                .totalRevenue(totalRevenue)
+                .averageOrderValue(averageOrderValue)
+                .build();
+    }
+
     private OrderResponse toResponse(Order o) {
         OrderResponse r = new OrderResponse();
         r.setId(o.getId());
         r.setTableId(o.getTableId());
         r.setTotalPrice(o.getTotalPrice());
+        r.setFinalPrice(o.getFinalPrice());
+        r.setNote(o.getNote());
         r.setCreatedAt(o.getCreatedAt());
         r.setStatus(o.getStatus());
         List<OrderItemResponse> items = o.getItems().stream().map(it -> {
             OrderItemResponse ir = new OrderItemResponse();
+            ir.setOrderId(o.getId());
             ir.setDishId(it.getDishId());
             ir.setQuantity(it.getQuantity());
             ir.setPricePerUnit(it.getPricePerUnit());
+            ir.setNote(it.getNote());
             return ir;
         }).toList();
         r.setItems(items);
