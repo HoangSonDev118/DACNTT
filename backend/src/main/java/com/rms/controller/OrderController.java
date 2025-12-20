@@ -3,6 +3,7 @@ package com.rms.controller;
 import com.rms.dto.request.OrderRequest;
 import com.rms.dto.response.DailySummaryResponse;
 import com.rms.dto.response.OrderResponse;
+import com.rms.facade.OrderFacade;
 import com.rms.service.OrderService;
 
 import java.time.LocalDate;
@@ -18,16 +19,39 @@ import java.util.Map;
 public class OrderController {
 
     private final OrderService orderService;
+    private final OrderFacade orderFacade; // Using Facade Pattern
 
     @PostMapping
     public OrderResponse create(@RequestBody OrderRequest req) {
-        return orderService.create(req);
+        // Using Facade Pattern for simplified order creation
+        return orderFacade.createOrder(req);
     }
 
     // API PUBLIC — không yêu cầu token
     @PostMapping("/public")
     public OrderResponse createPublic(@RequestBody OrderRequest req) {
-        return orderService.create(req);
+        // Using Facade Pattern for public order creation
+        return orderFacade.createOrder(req);
+    }
+    
+    /**
+     * Create order with payment in one call (using Facade Pattern)
+     */
+    @PostMapping("/with-payment")
+    public OrderFacade.OrderPaymentResult createWithPayment(
+            @RequestBody OrderRequest req,
+            @RequestParam String paymentMethod) {
+        // Using Facade Pattern to handle complex workflow
+        return orderFacade.createOrderWithPayment(req, paymentMethod);
+    }
+    
+    /**
+     * Get order with payment details (using Facade Pattern)
+     */
+    @GetMapping("/{id}/with-payment")
+    public OrderFacade.OrderPaymentResult getWithPayment(@PathVariable String id) {
+        // Using Facade Pattern to get complete order information
+        return orderFacade.getOrderWithPayment(id);
     }
 
     @GetMapping("/{id}")
@@ -39,6 +63,11 @@ public class OrderController {
     public List<OrderResponse> getAll(@RequestParam(required = false) String tableId) {
         if (tableId != null) return orderService.getByTableId(tableId);
         return orderService.getAll();
+    }
+
+    @PutMapping("/{id}")
+    public OrderResponse update(@PathVariable String id, @RequestBody OrderRequest req) {
+        return orderService.update(id, req);
     }
 
     @PutMapping("/{id}/status")

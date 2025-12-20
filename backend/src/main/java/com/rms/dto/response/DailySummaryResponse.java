@@ -6,6 +6,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
+import java.util.List;
 
 @Data
 @Builder
@@ -19,4 +20,5 @@ public class DailySummaryResponse {
     private Long pendingOrders;
     private Double totalRevenue;
     private Double averageOrderValue;
+    private List<String> orderIds;
 }

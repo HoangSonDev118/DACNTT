@@ -1,5 +1,6 @@
 package com.rms.service;
 
+import com.rms.adapter.impl.UserResponseAdapter;
 import com.rms.dto.request.LoginRequest;
 import com.rms.dto.request.RegisterRequest;
 import com.rms.dto.response.AuthResponse;
@@ -27,6 +28,7 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider tokenProvider;
     private final AuthenticationManager authenticationManager;
+    private final UserResponseAdapter userAdapter; // Using Adapter Pattern
     
     public AuthResponse register(RegisterRequest request) {
         if (userRepository.existsByEmail(request.getEmail())) {
@@ -51,7 +53,8 @@ public class AuthService {
         String accessToken = tokenProvider.generateAccessToken(user.getId());
         String refreshToken = tokenProvider.generateRefreshToken(user.getId());
         
-        return AuthResponse.of(accessToken, refreshToken, UserResponse.fromEntity(user));
+        // Using Adapter Pattern to convert Entity to DTO
+        return AuthResponse.of(accessToken, refreshToken, userAdapter.toDto(user));
     }
     
     public AuthResponse login(LoginRequest request) {
@@ -67,7 +70,8 @@ public class AuthService {
         String accessToken = tokenProvider.generateAccessToken(authentication);
         String refreshToken = tokenProvider.generateRefreshToken(userPrincipal.getId());
         
-        return AuthResponse.of(accessToken, refreshToken, UserResponse.fromEntity(user));
+        // Using Adapter Pattern to convert Entity to DTO
+        return AuthResponse.of(accessToken, refreshToken, userAdapter.toDto(user));
     }
     
     public AuthResponse refreshToken(String refreshToken) {
@@ -82,6 +86,7 @@ public class AuthService {
         String newAccessToken = tokenProvider.generateAccessToken(userId);
         String newRefreshToken = tokenProvider.generateRefreshToken(userId);
         
-        return AuthResponse.of(newAccessToken, newRefreshToken, UserResponse.fromEntity(user));
+        // Using Adapter Pattern to convert Entity to DTO
+        return AuthResponse.of(newAccessToken, newRefreshToken, userAdapter.toDto(user));
     }
 }

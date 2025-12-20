@@ -8,9 +8,13 @@ import java.time.LocalDateTime;
 public class DiscountResponse {
     private String id;
     private String code;
+    private String description;
     private Double discountPercent;
-    private Double minOrder;
+    private Double minOrderAmount;
+    private Double maxDiscountAmount;
     private LocalDateTime startDate;
     private LocalDateTime endDate;
-    private String status;
+    private Integer usageLimit;
+    private Integer usageCount;
+    private Boolean active;
 }

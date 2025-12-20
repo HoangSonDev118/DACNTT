@@ -237,7 +237,7 @@ ví dụ payload
 ```json
 {
     "email": "nguyenvanb@gmail.com",
-    "password": "Son1182004"
+    "password": "Abc123456"
 }
 ```
 
@@ -300,6 +300,154 @@ response
 
 
 =====
+USER (Quản lý nhân viên)
+=====
+
+### 1. Lấy thông tin user theo ID
+
+| GET | `/api/users/{id}` | Lấy thông tin user theo ID (CHỈ ADMIN) |
+
+**⚠️ LƯU Ý:** Endpoint này yêu cầu token của ADMIN.
+
+**Ví dụ:**
+```
+GET /api/users/6933020e1415aa6de9a78b70
+```
+
+response
+```json
+{
+    "success": true,
+    "message": "User retrieved successfully",
+    "data": {
+        "id": "6933020e1415aa6de9a78b70",
+        "email": "nguyenvanb@gmail.com",
+        "displayName": "Nguyen Van B",
+        "role": "STAFF",
+        "avatar": null,
+        "createdAt": "2025-12-05T23:02:22.803"
+    }
+}
+```
+
+### 2. Lấy danh sách tất cả users
+
+| GET | `/api/users` | Lấy danh sách tất cả users (CHỈ ADMIN) |
+
+**⚠️ LƯU Ý:** Endpoint này yêu cầu token của ADMIN.
+
+**Lấy tất cả users:**
+```
+GET /api/users
+```
+
+**Lọc theo role:**
+```
+GET /api/users?role=STAFF
+GET /api/users?role=ADMIN
+```
+
+response
+```json
+{
+    "success": true,
+    "message": "Users retrieved successfully",
+    "data": [
+        {
+            "id": "6933020e1415aa6de9a78b70",
+            "email": "nguyenvanb@gmail.com",
+            "displayName": "Nguyen Van B",
+            "role": "STAFF",
+            "avatar": null,
+            "createdAt": "2025-12-05T23:02:22.803"
+        },
+        {
+            "id": "693301a51415aa6de9a78b6f",
+            "email": "admin@rms.com",
+            "displayName": "Admin",
+            "role": "ADMIN",
+            "avatar": null,
+            "createdAt": "2025-12-05T22:58:45.123"
+        }
+    ]
+}
+```
+
+### 3. Cập nhật trạng thái hoạt động của user
+
+| PUT | `/api/users/{id}/status` | Kích hoạt/vô hiệu hóa tài khoản user (CHỈ ADMIN) |
+
+**⚠️ LƯU Ý:** Endpoint này yêu cầu token của ADMIN.
+
+ví dụ payload
+```json
+{
+    "isActive": false
+}
+```
+
+response
+```json
+{
+    "success": true,
+    "message": "User status updated successfully",
+    "data": {
+        "id": "6933020e1415aa6de9a78b70",
+        "email": "nguyenvanb@gmail.com",
+        "displayName": "Nguyen Van B",
+        "role": "STAFF",
+        "avatar": null,
+        "createdAt": "2025-12-05T23:02:22.803"
+    }
+}
+```
+
+**Giải thích:**
+- `isActive: true` - Kích hoạt tài khoản (user có thể đăng nhập)
+- `isActive: false` - Vô hiệu hóa tài khoản (user không thể đăng nhập)
+
+### 4. Cập nhật thông tin user
+
+| PUT | `/api/users/{id}` | Cập nhật thông tin user (CHỈ ADMIN) |
+
+**⚠️ LƯU Ý:** Endpoint này yêu cầu token của ADMIN.
+
+ví dụ payload
+```json
+{
+    "email": "nguyenvanb.updated@gmail.com",
+    "displayName": "Nguyen Van B Updated",
+    "password": "NewPassword123",
+    "avatar": "https://example.com/avatar.jpg"
+}
+```
+
+**Lưu ý:**
+- Tất cả các trường đều optional (chỉ gửi trường nào muốn cập nhật)
+- Password sẽ được mã hóa tự động
+- Không thể thay đổi role qua endpoint này
+
+response
+```json
+{
+    "success": true,
+    "message": "User updated successfully",
+    "data": {
+        "id": "6933020e1415aa6de9a78b70",
+        "email": "nguyenvanb.updated@gmail.com",
+        "displayName": "Nguyen Van B Updated",
+        "role": "STAFF",
+        "avatar": "https://example.com/avatar.jpg",
+        "createdAt": "2025-12-05T23:02:22.803"
+    }
+}
+```
+
+------------------------------------------------------------------------------------------------------
+
+
+
+=====
 TABLE
 =====
 | POST | `/api/tables` | Tạo bàn mới (Chỉ ADMIN OR STAFF) |
@@ -317,7 +465,7 @@ response
     "available": true
 }
 
-| GET | `/api/tables/6932f42aaa07ce07d7f5edf6` | Lấy thông tin chi tiết bàn (Chỉ ADMIN OR STAFF) |
+| GET | `/api/tables/6932f42aaa07ce07d7f5edf6` | Lấy thông tin chi tiết bàn (PUBLIC) |
 response
 {
     "id": "6932f42aaa07ce07d7f5edf6",
@@ -368,7 +516,7 @@ response
     "imageUrl": "https://abc.com/phoga.jpg"
 }
 
-| GET | `/api/dishes/6932fb811024662f11ad577b` | Thông tin món (Chỉ ADMIN OR STAFF) |
+| GET | `/api/dishes/6932fb811024662f11ad577b` | Thông tin món  |
 response
 {
     "id": "6932fb811024662f11ad577b",
@@ -379,6 +527,28 @@ response
     "available": true,
     "imageUrl": /anhcomga.img
 }
+| GET | `/api/dishes/` | Danh sách món  |
+response
+[
+    {
+        "id": "6932fb4e1024662f11ad577a",
+        "name": "Cơm gà",
+        "description": "Cơm gà xối mỡ",
+        "price": 45000.0,
+        "categoryId": "67a2049192ccab44ed001111",
+        "available": true,
+        "imageUrl": null
+    },
+    {
+        "id": "6932fbed1024662f11ad577c",
+        "name": "Cơm gà2",
+        "description": "Cơm gà xối mỡ2",
+        "price": 45000.0,
+        "categoryId": "67a2049192ccab44ed001111",
+        "available": true,
+        "imageUrl": null
+    }
+]
 
 
 | PUT | `/api/dishes/6932fb811024662f11ad577b` | Sửa thông tin món (Chỉ ADMIN OR STAFF) |
@@ -421,7 +591,7 @@ response
     "description": null
 }
 
-| GET | `/api/categories/6932f6c8aa07ce07d7f5edfa` | Thông tin danh mục (Chỉ ADMIN OR STAFF) |
+| GET | `/api/categories/6932f6c8aa07ce07d7f5edfa` | Thông tin danh mục (PUBLIC) |
 response
 {
     "id": "6932f6c8aa07ce07d7f5edfa",
@@ -454,7 +624,10 @@ response
 Order
 =====
 
-| POST | `/api/orders` | Tạo order món |
+| POST | `/api/orders` | Tạo order món (PUBLIC) |
+
+**⚠️ LƯU Ý:** Endpoint này là public, không cần token. Ai cũng có thể tạo order.
+
 ví dụ payload
 {
   "tableId": "6932f42aaa07ce07d7f5edf6",
@@ -498,7 +671,48 @@ response
     "status": "NEW"
 }
 
-| PUT | `/api/orders/69330f8f17364e06252ede3a/status` | Sửa thông tin order (Chỉ ADMIN OR STAFF) |
+| PUT | `/api/orders/69330f8f17364e06252ede3a` | Cập nhật order (Chỉ ADMIN OR STAFF) |
+
+**⚠️ LƯU Ý:** Endpoint này yêu cầu token của ADMIN hoặc STAFF.
+
+**Lưu ý:**
+- Tất cả các trường đều optional (chỉ gửi trường nào muốn cập nhật)
+- Khi cập nhật items, tổng giá sẽ được tính lại tự động
+
+ví dụ payload
+```json
+{
+  "tableId": "6932f42aaa07ce07d7f5edf7",
+  "items": [
+    {
+      "dishId": "6932fb4e1024662f11ad577a",
+      "quantity": 3
+    }
+  ],
+  "note": "Ghi chú mới"
+}
+```
+
+response
+```json
+{
+    "id": "69330f8f17364e06252ede3a",
+    "tableId": "6932f42aaa07ce07d7f5edf7",
+    "items": [
+        {
+            "dishId": "6932fb4e1024662f11ad577a",
+            "quantity": 3,
+            "pricePerUnit": 45000.0
+        }
+    ],
+    "totalPrice": 135000.0,
+    "createdAt": "2025-12-05T23:59:59.617",
+    "status": "NEW",
+    "note": "Ghi chú mới"
+}
+```
+
+| PUT | `/api/orders/69330f8f17364e06252ede3a/status` | Cập nhật trạng thái order (Chỉ ADMIN OR STAFF) |
 ví dụ payload
 {
   "status": "COMPLETED"
@@ -547,7 +761,12 @@ response
     "cancelledOrders": 2,
     "pendingOrders": 3,
     "totalRevenue": 2500000.0,
-    "averageOrderValue": 125000.0
+    "averageOrderValue": 125000.0,
+    "orderIds": [
+        "69330f8f17364e06252ede3a",
+        "69330fa017364e06252ede3b",
+        "69330fb117364e06252ede3c"
+    ]
 }
 ```
 
@@ -559,6 +778,7 @@ response
 - `pendingOrders`: Số đơn hàng đang xử lý (NEW, PREPARING, READY, SERVED)
 - `totalRevenue`: Tổng doanh thu từ các đơn đã hoàn thành (VNĐ)
 - `averageOrderValue`: Giá trị trung bình mỗi đơn hàng đã hoàn thành (VNĐ)
+- `orderIds`: Danh sách ID của tất cả các đơn hàng trong ngày
 
 ------------------------------------------------------------------------------------------------------
 
@@ -727,7 +947,7 @@ response
 }
 ```
 
-| GET | `/api/dish-items/693314c5d0a9h34c5d6e8g9h` | Lấy thông tin món trong combo theo ID (Chỉ ADMIN OR STAFF) |
+| GET | `/api/dish-items/693314c5d0a9h34c5d6e8g9h` | Lấy thông tin món trong combo theo ID (PUBLIC) |
 response
 ```json
 {
@@ -738,7 +958,7 @@ response
 }
 ```
 
-| GET | `/api/dish-items/combo/6932fb811024662f11ad577b` | Lấy tất cả món theo combo ID (Chỉ ADMIN OR STAFF) |
+| GET | `/api/dish-items/combo/6932fb811024662f11ad577b` | Lấy tất cả món theo combo ID (PUBLIC) |
 response
 ```json
 [
@@ -757,7 +977,7 @@ response
 ]
 ```
 
-| GET | `/api/dish-items/product/6932fb4e1024662f11ad577a` | Lấy tất cả combo chứa món theo product ID (Chỉ ADMIN OR STAFF) |
+| GET | `/api/dish-items/product/6932fb4e1024662f11ad577a` | Lấy tất cả combo chứa món theo product ID (PUBLIC) |
 response
 ```json
 [
@@ -776,7 +996,7 @@ response
 ]
 ```
 
-| GET | `/api/dish-items` | Lấy tất cả các món trong combo (Chỉ ADMIN OR STAFF) |
+| GET | `/api/dish-items` | Lấy tất cả các món trong combo (PUBLIC) |
 response
 ```json
 [
@@ -950,12 +1170,12 @@ GET /api/orders/summary/daily
 GET /api/orders/summary/daily?date=2025-12-18
 ```
 
-### Lấy tất cả bàn
+### Lấy tất cả bàn (PUBLIC)
 ```
 GET /api/tables
 ```
 
-### Lấy tất cả danh mục
+### Lấy tất cả danh mục (PUBLIC)
 ```
 GET /api/categories
 ```
@@ -963,6 +1183,17 @@ GET /api/categories
 ### Lấy tất cả món ăn
 ```
 GET /api/dishes
+```
+
+### Lấy danh sách users theo role
+```
+GET /api/users?role=STAFF
+GET /api/users?role=ADMIN
+```
+
+### Lấy tất cả users
+```
+GET /api/users
 ```
 
 ------------------------------------------------------------------------------------------------------
@@ -1007,14 +1238,29 @@ Các trạng thái order có thể sử dụng khi cập nhật:
 ### Public Endpoints (Không cần token)
 - `POST /api/auth/login` - Đăng nhập
 - `POST /api/auth/refresh` - Refresh token
-- `POST /api/orders/public` - Tạo order công khai (ai cũng có thể đặt order)
+- `POST /api/orders` - Tạo order mới (ai cũng có thể đặt order)
+- `GET /api/dishes` - Lấy danh sách món ăn
+- `GET /api/dishes/{id}` - Lấy thông tin món ăn theo ID
+- `GET /api/tables` - Lấy danh sách bàn
+- `GET /api/tables/{id}` - Lấy thông tin bàn theo ID
+- `GET /api/categories` - Lấy danh sách danh mục
+- `GET /api/categories/{id}` - Lấy thông tin danh mục theo ID
 
 ### Protected Endpoints (Cần token và role)
 - **Chỉ ADMIN:**
   - `POST /api/auth/register` - Tạo tài khoản mới cho STAFF
+  - `GET /api/users` - Quản lý users
+  - `PUT /api/users/{id}` - Cập nhật thông tin user
+  - `PUT /api/users/{id}/status` - Cập nhật trạng thái user
 
 - **ADMIN & STAFF:**
-  - Tất cả các endpoints quản lý: orders, dishes, tables, categories, payments, discounts, dish-items
+  - `POST/PUT/DELETE /api/dishes/**` - Quản lý món ăn
+  - `POST/PUT/DELETE /api/tables/**` - Quản lý bàn
+  - `POST/PUT/DELETE /api/categories/**` - Quản lý danh mục
+  - `POST/PUT/DELETE /api/orders/**` - Quản lý đơn hàng
+  - `POST/PUT/DELETE /api/payments/**` - Quản lý thanh toán
+  - `POST/PUT/DELETE /api/discounts/**` - Quản lý giảm giá
+  - `POST/PUT/DELETE /api/dish-items/**` - Quản lý món trong combo
 
 ### Quy Trình Tạo Tài Khoản
 1. Tài khoản ADMIN đầu tiên phải được tạo trực tiếp trong database

@@ -1,5 +1,6 @@
 package com.rms.service;
 
+import com.rms.adapter.impl.PaymentResponseAdapter;
 import com.rms.dto.request.PaymentRequest;
 import com.rms.dto.response.PaymentResponse;
 import com.rms.exception.BadRequestException;
@@ -19,6 +20,7 @@ public class PaymentServiceImpl implements PaymentService {
 
     private final PaymentRepository paymentRepository;
     private final OrderRepository orderRepository;
+    private final PaymentResponseAdapter paymentAdapter; // Using Adapter Pattern
 
     @Override
     public PaymentResponse create(PaymentRequest request) {
@@ -35,27 +37,29 @@ public class PaymentServiceImpl implements PaymentService {
                 .build();
 
         paymentRepository.save(payment);
-        return toResponse(payment);
+        
+        // Using Adapter Pattern to convert Entity to DTO
+        return paymentAdapter.toDto(payment);
     }
 
     @Override
     public PaymentResponse getById(String id) {
         return paymentRepository.findById(id)
-                .map(this::toResponse)
+                .map(paymentAdapter::toDto) // Using Adapter Pattern
                 .orElseThrow(() -> new ResourceNotFoundException("Payment not found"));
     }
 
     @Override
     public List<PaymentResponse> getByOrderId(String orderId) {
         return paymentRepository.findByOrderId(orderId).stream()
-                .map(this::toResponse)
+                .map(paymentAdapter::toDto) // Using Adapter Pattern
                 .toList();
     }
 
     @Override
     public List<PaymentResponse> getAll() {
         return paymentRepository.findAll().stream()
-                .map(this::toResponse)
+                .map(paymentAdapter::toDto) // Using Adapter Pattern
                 .toList();
     }
 
@@ -65,15 +69,5 @@ public class PaymentServiceImpl implements PaymentService {
             throw new ResourceNotFoundException("Payment not found");
         }
         paymentRepository.deleteById(id);
-    }
-
-    private PaymentResponse toResponse(Payment payment) {
-        PaymentResponse response = new PaymentResponse();
-        response.setId(payment.getId());
-        response.setOrderId(payment.getOrderId());
-        response.setAmount(payment.getAmount());
-        response.setPaymentMethod(payment.getPaymentMethod());
-        response.setPaidAt(payment.getPaidAt());
-        return response;
     }
 }

@@ -34,12 +34,27 @@ public class DishServiceImpl implements DishService {
     public DishResponse update(String id, DishRequest request) {
         Dish d = dishRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Dish not found"));
-        d.setName(request.getName());
-        d.setDescription(request.getDescription());
-        d.setPrice(request.getPrice());
-        d.setCategoryId(request.getCategoryId());
-        d.setImageUrl(request.getImageUrl());
-        if (request.getAvailable() != null) d.setAvailable(request.getAvailable());
+        
+        // Update only provided fields
+        if (request.getName() != null && !request.getName().isEmpty()) {
+            d.setName(request.getName());
+        }
+        if (request.getDescription() != null) {
+            d.setDescription(request.getDescription());
+        }
+        if (request.getPrice() != null) {
+            d.setPrice(request.getPrice());
+        }
+        if (request.getCategoryId() != null && !request.getCategoryId().isEmpty()) {
+            d.setCategoryId(request.getCategoryId());
+        }
+        if (request.getImageUrl() != null) {
+            d.setImageUrl(request.getImageUrl());
+        }
+        if (request.getAvailable() != null) {
+            d.setAvailable(request.getAvailable());
+        }
+        
         dishRepository.save(d);
         return toResponse(d);
     }

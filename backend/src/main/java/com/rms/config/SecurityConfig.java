@@ -43,6 +43,28 @@ public class SecurityConfig {
                         .requestMatchers("/api/orders/public/**").permitAll()
                         .requestMatchers("/api/public/**").permitAll()
                         
+                        // Cho phép tạo order (POST only)
+                        .requestMatchers(org.springframework.http.HttpMethod.POST, "/api/orders").permitAll()
+                        
+                        // Cho phép xem thông tin món ăn (GET only)
+                        .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/dishes/**").permitAll()
+                        .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/dishes").permitAll()
+                        
+                        // Cho phép xem thông tin bàn (GET only)
+                        .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/tables/**").permitAll()
+                        .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/tables").permitAll()
+                        
+                        // Cho phép xem thông tin danh mục (GET only)
+                        .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/categories/**").permitAll()
+                        .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/categories").permitAll()
+                        
+                        // Cho phép xem thông tin món trong combo (GET only)
+                        .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/dish-items/**").permitAll()
+                        .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/dish-items").permitAll()
+                        
+                        // Quản lý users - chỉ ADMIN
+                        .requestMatchers("/api/users/**").hasAuthority("ADMIN")
+                        
                         // Chỉ ADMIN mới có thể tạo tài khoản mới
                         .requestMatchers("/api/auth/register").hasAuthority("ADMIN")
                         

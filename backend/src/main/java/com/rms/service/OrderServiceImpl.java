@@ -74,6 +74,41 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
+    public OrderResponse update(String id, OrderRequest request) {
+        Order order = orderRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Order not found"));
+
+        // Update only provided fields
+        if (request.getTableId() != null && !request.getTableId().isEmpty()) {
+            // validate table exists
+            if (!tableRepository.existsById(request.getTableId())) {
+                throw new BadRequestException("Table not found");
+            }
+            order.setTableId(request.getTableId());
+        }
+
+        if (request.getItems() != null && !request.getItems().isEmpty()) {
+            // build items, calculate totals
+            double total = 0.0;
+            List<OrderItem> items = request.getItems().stream().map(this::toOrderItem).toList();
+            for (OrderItem it : items) {
+                if (it.getPricePerUnit() == null) throw new BadRequestException("Dish price missing");
+                total += it.getPricePerUnit() * it.getQuantity();
+            }
+            order.setItems(items);
+            order.setTotalPrice(total);
+            order.setFinalPrice(total);
+        }
+
+        if (request.getNote() != null) {
+            order.setNote(request.getNote());
+        }
+
+        orderRepository.save(order);
+        return toResponse(order);
+    }
+
+    @Override
     public OrderResponse updateStatus(String id, String status) {
         Order order = orderRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Order not found"));
@@ -130,6 +165,10 @@ public class OrderServiceImpl implements OrderService {
         
         double averageOrderValue = completedOrders > 0 ? totalRevenue / completedOrders : 0.0;
         
+        List<String> orderIds = orders.stream()
+                .map(Order::getId)
+                .collect(java.util.stream.Collectors.toList());
+        
         return DailySummaryResponse.builder()
                 .date(date)
                 .totalOrders(totalOrders)
@@ -138,6 +177,7 @@ public class OrderServiceImpl implements OrderService {
                 .pendingOrders(pendingOrders)
                 .totalRevenue(totalRevenue)
                 .averageOrderValue(averageOrderValue)
+                .orderIds(orderIds)
                 .build();
     }
 

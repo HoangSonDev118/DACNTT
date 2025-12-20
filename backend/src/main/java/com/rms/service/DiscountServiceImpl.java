@@ -20,11 +20,15 @@ public class DiscountServiceImpl implements DiscountService {
     public DiscountResponse create(DiscountRequest request) {
         Discount discount = Discount.builder()
                 .code(request.getCode())
+                .description(request.getDescription())
                 .discountPercent(request.getDiscountPercent())
-                .minOrder(request.getMinOrder())
+                .minOrderAmount(request.getMinOrderAmount())
+                .maxDiscountAmount(request.getMaxDiscountAmount())
                 .startDate(request.getStartDate())
                 .endDate(request.getEndDate())
-                .status(request.getStatus())
+                .usageLimit(request.getUsageLimit())
+                .usageCount(0)
+                .active(request.getActive() != null ? request.getActive() : true)
                 .build();
         discountRepository.save(discount);
         return toResponse(discount);
@@ -34,12 +38,35 @@ public class DiscountServiceImpl implements DiscountService {
     public DiscountResponse update(String id, DiscountRequest request) {
         Discount discount = discountRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Discount not found"));
-        discount.setCode(request.getCode());
-        discount.setDiscountPercent(request.getDiscountPercent());
-        discount.setMinOrder(request.getMinOrder());
-        discount.setStartDate(request.getStartDate());
-        discount.setEndDate(request.getEndDate());
-        discount.setStatus(request.getStatus());
+        
+        if (request.getCode() != null && !request.getCode().isEmpty()) {
+            discount.setCode(request.getCode());
+        }
+        if (request.getDescription() != null && !request.getDescription().isEmpty()) {
+            discount.setDescription(request.getDescription());
+        }
+        if (request.getDiscountPercent() != null) {
+            discount.setDiscountPercent(request.getDiscountPercent());
+        }
+        if (request.getMinOrderAmount() != null) {
+            discount.setMinOrderAmount(request.getMinOrderAmount());
+        }
+        if (request.getMaxDiscountAmount() != null) {
+            discount.setMaxDiscountAmount(request.getMaxDiscountAmount());
+        }
+        if (request.getStartDate() != null) {
+            discount.setStartDate(request.getStartDate());
+        }
+        if (request.getEndDate() != null) {
+            discount.setEndDate(request.getEndDate());
+        }
+        if (request.getUsageLimit() != null) {
+            discount.setUsageLimit(request.getUsageLimit());
+        }
+        if (request.getActive() != null) {
+            discount.setActive(request.getActive());
+        }
+        
         discountRepository.save(discount);
         return toResponse(discount);
     }
@@ -77,11 +104,15 @@ public class DiscountServiceImpl implements DiscountService {
         DiscountResponse response = new DiscountResponse();
         response.setId(discount.getId());
         response.setCode(discount.getCode());
+        response.setDescription(discount.getDescription());
         response.setDiscountPercent(discount.getDiscountPercent());
-        response.setMinOrder(discount.getMinOrder());
+        response.setMinOrderAmount(discount.getMinOrderAmount());
+        response.setMaxDiscountAmount(discount.getMaxDiscountAmount());
         response.setStartDate(discount.getStartDate());
         response.setEndDate(discount.getEndDate());
-        response.setStatus(discount.getStatus());
+        response.setUsageLimit(discount.getUsageLimit());
+        response.setUsageCount(discount.getUsageCount());
+        response.setActive(discount.getActive());
         return response;
     }
 }
