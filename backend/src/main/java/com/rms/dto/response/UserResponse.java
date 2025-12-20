@@ -1,5 +1,6 @@
 package com.rms.dto.response;
 
+import com.rms.model.Role;
 import com.rms.model.User;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -18,6 +19,7 @@ public class UserResponse {
     private String email;
     private String displayName;
     private String avatar;
+    private Role role;
     private LocalDateTime createdAt;
     
     public static UserResponse fromEntity(User user) {
@@ -26,6 +28,7 @@ public class UserResponse {
                 .email(user.getEmail())
                 .displayName(user.getDisplayName())
                 .avatar(user.getAvatar())
+                .role(user.getRole())
                 .createdAt(user.getCreatedAt())
                 .build();
     }

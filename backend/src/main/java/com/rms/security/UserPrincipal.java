@@ -1,5 +1,6 @@
 package com.rms.security;
 
+import com.rms.model.Role;
 import com.rms.model.User;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -21,6 +22,7 @@ public class UserPrincipal implements UserDetails {
     private String password;
     private String displayName;
     private Boolean isActive;
+    private Role role;
     
     public static UserPrincipal create(User user) {
         return UserPrincipal.builder()
@@ -29,12 +31,13 @@ public class UserPrincipal implements UserDetails {
                 .password(user.getPassword())
                 .displayName(user.getDisplayName())
                 .isActive(user.getIsActive())
+                .role(user.getRole())
                 .build();
     }
     
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return Collections.singletonList(new SimpleGrantedAuthority("ROLE_USER"));
+        return Collections.singletonList(new SimpleGrantedAuthority(role.name()));
     }
     
     @Override
