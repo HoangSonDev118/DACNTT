@@ -16,4 +16,14 @@ public interface OrderService {
     List<OrderResponse> getByTableId(String tableId);
     void delete(String id);
     DailySummaryResponse getDailySummary(LocalDate date);
+
+    /**
+     * Calculate revenue for a specific day
+     */
+    double calculateRevenueByDay(String date);
+
+    /**
+     * Calculate revenue for a specific month
+     */
+    double calculateRevenueByMonth(String month);
 }

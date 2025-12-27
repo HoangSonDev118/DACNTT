@@ -87,4 +87,14 @@ public class OrderController {
         LocalDate targetDate = date != null ? LocalDate.parse(date) : LocalDate.now();
         return orderService.getDailySummary(targetDate);
     }
+
+    @GetMapping("/revenue/daily")
+    public double getDailyRevenue(@RequestParam String date) {
+        return orderService.calculateRevenueByDay(date);
+    }
+
+    @GetMapping("/revenue/monthly")
+    public double getMonthlyRevenue(@RequestParam String month) {
+        return orderService.calculateRevenueByMonth(month);
+    }
 }

@@ -108,6 +108,22 @@ public class OrderFacade {
     }
     
     /**
+     * Facade method: Get revenue by day
+     */
+    public double getRevenueByDay(String date) {
+        log.info("Facade: Calculating revenue for date: {}", date);
+        return orderService.calculateRevenueByDay(date);
+    }
+
+    /**
+     * Facade method: Get revenue by month
+     */
+    public double getRevenueByMonth(String month) {
+        log.info("Facade: Calculating revenue for month: {}", month);
+        return orderService.calculateRevenueByMonth(month);
+    }
+    
+    /**
      * Result object for order + payment operations
      */
     @lombok.Data

@@ -181,6 +181,26 @@ public class OrderServiceImpl implements OrderService {
                 .build();
     }
 
+    @Override
+    public double calculateRevenueByDay(String date) {
+        LocalDate targetDate = LocalDate.parse(date);
+        return orderRepository.findAll().stream()
+                .filter(order -> order.getCreatedAt().toLocalDate().equals(targetDate))
+                .mapToDouble(Order::getFinalPrice)
+                .sum();
+    }
+
+    @Override
+    public double calculateRevenueByMonth(String month) {
+        int targetMonth = Integer.parseInt(month.split("-")[1]);
+        int targetYear = Integer.parseInt(month.split("-")[0]);
+        return orderRepository.findAll().stream()
+                .filter(order -> order.getCreatedAt().getYear() == targetYear &&
+                        order.getCreatedAt().getMonthValue() == targetMonth)
+                .mapToDouble(Order::getFinalPrice)
+                .sum();
+    }
+
     private OrderResponse toResponse(Order o) {
         OrderResponse r = new OrderResponse();
         r.setId(o.getId());
